@@ -90,5 +90,3 @@ class data_analyser():
         plt.plot(time, data_pre, "g.-")
         plt.plot(time, data, "r.-")
         plt.show()
-
-
