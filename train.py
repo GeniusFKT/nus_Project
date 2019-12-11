@@ -1,8 +1,6 @@
+import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, LSTM, RepeatVector, TimeDistributed
-import numpy as np
-import pandas as pd
-from matplotlib import pyplot as plt
 from datautil import data_loader
 
 n_steps_in, n_steps_out = 5, 1
@@ -20,11 +18,17 @@ if __name__ == "__main__":
     model.add(RepeatVector(n_steps_out))
     model.add(LSTM(200, activation='relu', return_sequences=True))
     model.add(TimeDistributed(Dense(n_features_out)))
-    model.compile(optimizer='adam', loss='mse')
+
+    loss = tf.keras.losses.MeanSquaredError(name="Loss")
+
+    metrics = [tf.keras.metrics.MeanAbsolutePercentageError(name="mean_absolute_percentage"),
+               tf.keras.metrics.MeanSquaredError(name="mean_square")]
+
+    model.compile(optimizer='adam', loss=loss, metrics=metrics)
 
     model.summary()
 
-    model.fit(trainX, trainY, batch_size=batch_size, epochs=100, validation_data=(testX, testY))
+    model.fit(trainX, trainY, batch_size=batch_size, epochs=5, validation_data=(testX, testY), shuffle=True)
     score = model.evaluate(testX, testY, batch_size=batch_size)
     print('Test score:', score)
 

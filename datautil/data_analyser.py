@@ -1,14 +1,32 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
 class data_analyser():
-    def __init__(self, )
+    def __init__(self, data_path, input_length, output_length):
+        self.raw_df = pd.read_csv(data_path)
+        self.input_length = input_length
+        self.output_length = output_length
+
+        df = self.raw_df.drop(['Unnamed: 0','typrep'],axis=1)
+        df = df.fillna(0)
+        # df: normalization of raw_df
+        cols = df.columns
+        normlist=[]
+        for col in cols:
+            if str(df[col].dtype) == 'float64':
+                normlist.append(col)
+        for i, name in enumerate(normlist):
+            df[name] = (df[name]-df[name].mean())/(df[name].std())
+
+        self.df = df
+
     def draw(self, company, model):
         # data used for restoring
-        e_min = self.raw_df['b001100000'].min()
-        e_max = self.raw_df['b001100000'].max()
-        p_min = self.raw_df['b001000000'].min()
-        p_max = self.raw_df['b001000000'].max()
+        e_mean = self.raw_df['b001100000'].mean()
+        e_std = self.raw_df['b001100000'].std()
+        p_mean = self.raw_df['b001000000'].mean()
+        p_std = self.raw_df['b001000000'].std()
 
         # data used for drawing
         # data: an ndarray which contains company's profit
@@ -39,8 +57,8 @@ class data_analyser():
 
         # restore to unnormalized value
         pre_earning = pre[0, :, 0]
-        pre_earning *= (e_max - e_min)
-        pre_earning += e_min
+        pre_earning *= e_std
+        pre_earning += e_mean
         data_pre = data[:-3]
         data_pre = np.concatenate((data_pre, pre_earning))
 
@@ -59,8 +77,8 @@ class data_analyser():
 
         # restore
         pre_profit = pre[0, :, 1]
-        pre_profit *= (p_max - p_min)
-        pre_profit += p_min
+        pre_profit *= p_std
+        pre_profit += p_mean
         data_pre = data[:-3]
         data_pre = np.concatenate((data_pre, pre_profit))
 
@@ -72,3 +90,5 @@ class data_analyser():
         plt.plot(time, data_pre, "g.-")
         plt.plot(time, data, "r.-")
         plt.show()
+
+
