@@ -1,9 +1,16 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 
 class data_loader():
     def __init__(self, data_path, input_length, output_length, ratio):
+        '''
+            PARAM:
+            data_path: path to data file
+            input_length(int): how many years of data used for prediction
+            output_length(int): how many years we need to predict
+            ratio: used in get_data v1 version, how many data used for training
+        '''
+
         self.raw_df = pd.read_csv(data_path)
         self.input_length = input_length
         self.output_length = output_length
@@ -22,8 +29,14 @@ class data_loader():
 
         self.df = df
 
-    # fetch training and testing data from data frame
     def get_data_v1(self):
+        '''
+            fetch training and testing data from data frame
+            Given input_length years data, predict output_length years
+            training dataset: former 70% (order by stkcd)
+            testing dataset: later 30%
+        '''
+
         stkcd=self.df['stkcd']
         stkcd=np.array(stkcd).tolist()
         stkcd=list(set(stkcd))
@@ -47,12 +60,15 @@ class data_loader():
         trainY = dataY[:train_size]
         testX = dataX[train_size:]
         testY = dataY[train_size:]
-        print('hell0')
 
         return trainX, trainY, testX, testY
 
-    # fetch training and testing data from data frame
     def get_data(self):
+        '''
+            Given input_length years data, predict output_length year
+            Test dataset is the last input_length + output_length years stat from company (2000+)
+        '''
+
         stkcd=self.df['stkcd']
         stkcd=np.array(stkcd).tolist()
         stkcd=list(set(stkcd))
@@ -60,19 +76,18 @@ class data_loader():
 
         trainX,trainY=[],[]
         testX,testY=[],[]
-        input_length=5
-        output_length=1
+
         for i,val in enumerate(stkcd):
             f=firm.get_group(val)
             f=f.drop(['stkcd','accper'],axis=1)
             f=f.values
-            num=f.shape[0]-input_length-output_length
+            num=f.shape[0]-self.input_length-self.output_length
             if (num>=0):
-                testX.append(f[-input_length-output_length:-output_length,:])
-                testY.append(f[-output_length:,10])
+                testX.append(f[-self.input_length-self.output_length:-self.output_length,:])
+                testY.append(f[-self.output_length:,10])
                 for j in range(num):
-                    trainX.append(f[j:j+input_length,:])
-                    trainY.append(f[j:j+input_length,10])
+                    trainX.append(f[j:j+self.input_length,:])
+                    trainY.append(f[j+self.input_length:j+self.input_length+self.output_length,10])
         trainX=np.array(trainX)
         trainY=np.array(trainY)
         testX=np.array(testX)
