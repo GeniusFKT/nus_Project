@@ -12,7 +12,7 @@ EPOCHS = 20
 
 class my_model():
     def __init__(self):
-        self.loader = data_loader.data_loader("D:\\VSCode_Project\\Python\\Project\\data\\level1.csv", n_steps_in, n_steps_out, 0.8)
+        self.loader = data_loader.data_loader('/home/zhangbowen/zbw/nus_Project/data/level1.csv', n_steps_in, n_steps_out, 0.8)
         trainX, trainY, testX, testY = self.loader.get_data()
         self.trainX = trainX
         self.trainY = trainY
