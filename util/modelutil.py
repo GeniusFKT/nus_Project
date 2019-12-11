@@ -8,7 +8,7 @@ from keras.callbacks import ModelCheckpoint
 n_steps_in, n_steps_out = 5, 1
 n_features_in, n_features_out = 27, 1
 batch_size = 20
-EPOCHS = 20
+EPOCHS = 30
 
 class my_model():
     def __init__(self):
@@ -22,10 +22,15 @@ class my_model():
 class model_origin(my_model):
     def train(self):
         model = Sequential()
-        model.add(LSTM(200, activation='relu', input_shape=(n_steps_in, n_features_in)))
-        model.add(LSTM(200, activation='relu'))
+        model.add(LSTM(128, activation='relu', input_shape=(n_steps_in, n_features_in), return_sequences=True))
+        model.add(LSTM(256, activation='relu', input_shape=(n_steps_in, 128), return_sequences=True))
+        model.add(LSTM(512, activation='relu', input_shape=(n_steps_in, 256), return_sequences=False))
+
         model.add(RepeatVector(n_steps_out))
-        model.add(LSTM(200, activation='relu', return_sequences=True))
+        model.add(LSTM(512, activation='relu', input_shape=(n_steps_out, 512), return_sequences=True))
+        model.add(LSTM(256, activation='relu', input_shape=(n_steps_out, 512), return_sequences=True))
+        model.add(LSTM(128, activation='relu', input_shape=(n_steps_out, 256), return_sequences=True))
+
         model.add(TimeDistributed(Dense(n_features_out)))
 
         loss = tf.keras.losses.MeanSquaredError(name="Loss")
