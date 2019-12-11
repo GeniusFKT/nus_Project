@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from keras.models import load_model
-import os, sys
 
 ROOT_DIR = sys.path[0]
 
