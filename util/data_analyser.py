@@ -3,8 +3,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from keras.models import load_model
 
-ROOT_DIR = sys.path[0]
-
 class data_analyser():
     def __init__(self, model_path, data_path, input_length, output_length):
         self.raw_df = pd.read_csv(data_path)
