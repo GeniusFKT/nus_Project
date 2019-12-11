@@ -47,6 +47,7 @@ class data_loader():
         trainY = dataY[:train_size]
         testX = dataX[train_size:]
         testY = dataY[train_size:]
+        print('hell0')
 
         return trainX, trainY, testX, testY
 
