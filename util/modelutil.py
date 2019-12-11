@@ -7,19 +7,51 @@ from keras.callbacks import ModelCheckpoint
 
 n_steps_in, n_steps_out = 5, 1
 n_features_in, n_features_out = 27, 1
-batch_size = 20
+batch_size = 64
 EPOCHS = 30
 
 class my_model():
     def __init__(self):
-        self.loader = data_loader.data_loader("D:\\VSCode_Project\\Python\\Project\\data\\level1.csv", n_steps_in, n_steps_out, 0.8)
+        self.loader = data_loader.data_loader('/home/zhangbowen/zbw/nus_Project/data/level1.csv', n_steps_in, n_steps_out, 0.8)
         trainX, trainY, testX, testY = self.loader.get_data()
         self.trainX = trainX
         self.trainY = trainY
         self.testX = testX
         self.testY = testY
 
-class model_origin(my_model):
+
+class SingleLayerLSTM(my_model):
+
+    def __init__(self):
+        super(SingleLayerLSTM, self).__init__()
+
+
+    def train(self):
+        model = Sequential()
+        model.add(LSTM(128, activation='relu', input_shape=(n_steps_in, n_features_in), return_sequences=False))
+        model.add(RepeatVector(n_steps_out))
+        model.add(LSTM(128, activation='relu', input_shape=(n_steps_out, 128), return_sequences=True))
+        model.add(TimeDistributed(Dense(n_features_out)))
+
+        loss = tf.keras.losses.MeanSquaredError(name="Loss")
+        # metrics = [tf.keras.metrics.MeanSquaredError(name="mean_square")]
+        # checkpoint = ModelCheckpoint("./model/lstm_val.h5", monitor="mean_square", verbose=1, save_best_only=True, mode='min')
+
+        model.compile(optimizer='adam', loss=loss)
+        model.summary()
+        
+        model.fit(
+            self.trainX, 
+            self.trainY, 
+            batch_size=batch_size, 
+            epochs=EPOCHS, 
+            validation_data=(self.testX, self.testY), 
+            shuffle=True
+        )
+        
+        model.save('/home/zhangbowen/zbw/nus_Project/model/lstm.h5')
+
+class MultiLayerLSTM(my_model):
     def train(self):
         model = Sequential()
         model.add(LSTM(128, activation='relu', input_shape=(n_steps_in, n_features_in), return_sequences=True))
@@ -62,4 +94,12 @@ class model_seq2seq(my_model):
 
         model.summary()
 
-        model.fit(self.trainX, self.trainY, batch_size=batch_size, callbacks=[checkpoint], epochs=EPOCHS, validation_data=(self.testX, self.testY), shuffle=True)
+        model.fit(
+                self.trainX, 
+                self.trainY, 
+                batch_size=batch_size, 
+                callbacks=[checkpoint], 
+                epochs=EPOCHS, 
+                validation_data=(self.testX, self.testY), 
+                shuffle=True
+        )

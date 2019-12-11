@@ -90,7 +90,9 @@ class data_loader():
                     trainY.append(f[j+self.input_length:j+self.input_length+self.output_length,10])
         trainX=np.array(trainX)
         trainY=np.array(trainY)
+        trainY=np.reshape(trainY,(-1,self.output_length,1))
         testX=np.array(testX)
         testY=np.array(testY)
+        testY=np.reshape(testY,(-1,self.output_length,1))
 
         return trainX, trainY, testX, testY

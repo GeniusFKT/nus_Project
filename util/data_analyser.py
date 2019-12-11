@@ -1,12 +1,17 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+from keras.models import load_model
+import os, sys
+
+ROOT_DIR = sys.path[0]
 
 class data_analyser():
-    def __init__(self, data_path, input_length, output_length):
+    def __init__(self, model_path, data_path, input_length, output_length):
         self.raw_df = pd.read_csv(data_path)
         self.input_length = input_length
         self.output_length = output_length
+        self.model = load_model(model_path)
 
         df = self.raw_df.drop(['Unnamed: 0','typrep'],axis=1)
         df = df.fillna(0)
@@ -21,7 +26,7 @@ class data_analyser():
 
         self.df = df
 
-    def draw(self, company, model):
+    def draw(self, company):
         # data used for restoring
         e_mean = self.raw_df['b001100000'].mean()
         e_std = self.raw_df['b001100000'].std()
@@ -50,16 +55,18 @@ class data_analyser():
         testX = []
         if num >= 0:
             testX = f[num : num + self.input_length, :]
+        else:
+            return
         testX = testX.reshape([1, self.input_length, f.shape[1]])
 
         # predict
-        pre = model.predict(testX)
-
+        pre = self.model.predict(testX)
+        '''
         # restore to unnormalized value
         pre_earning = pre[0, :, 0]
         pre_earning *= e_std
         pre_earning += e_mean
-        data_pre = data[:-3]
+        data_pre = data[:-1]
         data_pre = np.concatenate((data_pre, pre_earning))
 
         # plot earning
@@ -69,17 +76,19 @@ class data_analyser():
         plt.legend(['predict value', 'actual observed value'], loc=0)
         plt.plot(time, data_pre, "g.-")
         plt.plot(time, data, "r.-")
+        plt.savefig('D://VSCode_Project//Python//Project//fig//company%d.png' %(company))
         plt.show()
 
+        '''
         # profit
         data = raw_f['b001000000']
         data = data.values
 
         # restore
-        pre_profit = pre[0, :, 1]
+        pre_profit = pre[0, :, 0]
         pre_profit *= p_std
         pre_profit += p_mean
-        data_pre = data[:-3]
+        data_pre = data[:-1]
         data_pre = np.concatenate((data_pre, pre_profit))
 
         # plot profit
@@ -89,4 +98,11 @@ class data_analyser():
         plt.legend(['predict value', 'actual observed value'], loc=0)
         plt.plot(time, data_pre, "g.-")
         plt.plot(time, data, "r.-")
+        plt.savefig('D://VSCode_Project//Python//Project//fig//company%d.png' %(company))
         plt.show()
+
+
+if __name__ == "__main__":
+    analyser = data_analyser("D://VSCode_Project//Python//Project//model//lstm_mae.h5", "D://VSCode_Project//Python//Project//data//level1.csv", 5, 1)
+    for i in range(1, 100):
+        analyser.draw(i)
