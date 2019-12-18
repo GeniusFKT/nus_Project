@@ -4,6 +4,11 @@ from keras.layers import Dense, LSTM, RepeatVector, TimeDistributed
 from util import data_loader
 from seq2seq.models import Seq2Seq
 from keras.callbacks import ModelCheckpoint
+import os
+
+ROOT_DIR = os.path.abspath("..")
+DATA_DIR = os.path.join(ROOT_DIR, "data")
+MODEL_DIR = os.path.join(ROOT_DIR, "model")
 
 n_steps_in, n_steps_out = 5, 1
 n_features_in, n_features_out = 27, 1
@@ -12,7 +17,8 @@ EPOCHS = 30
 
 class my_model():
     def __init__(self):
-        self.loader = data_loader.data_loader('/home/zhangbowen/zbw/nus_Project/data/level1.csv', n_steps_in, n_steps_out, 0.8)
+        data_name = os.path.join(DATA_DIR, "level1.csv")
+        self.loader = data_loader.data_loader(data_name, n_steps_in, n_steps_out, 0.8)
         trainX, trainY, testX, testY = self.loader.get_data()
         self.trainX = trainX
         self.trainY = trainY
@@ -21,10 +27,8 @@ class my_model():
 
 
 class SingleLayerLSTM(my_model):
-
     def __init__(self):
         super(SingleLayerLSTM, self).__init__()
-
 
     def train(self):
         model = Sequential()
@@ -39,7 +43,7 @@ class SingleLayerLSTM(my_model):
 
         model.compile(optimizer='adam', loss=loss)
         model.summary()
-        
+
         model.fit(
             self.trainX, 
             self.trainY, 
@@ -48,8 +52,9 @@ class SingleLayerLSTM(my_model):
             validation_data=(self.testX, self.testY), 
             shuffle=True
         )
-        
-        model.save('/home/zhangbowen/zbw/nus_Project/model/lstm.h5')
+
+        model_name = os.path.join(MODEL_DIR, "lstm.h5")
+        model.save(model_name)
 
 class MultiLayerLSTM(my_model):
     def train(self):

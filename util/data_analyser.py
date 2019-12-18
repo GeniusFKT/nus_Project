@@ -2,6 +2,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from keras.models import load_model
+import os
+
+ROOT_DIR = os.path.abspath("..")
+FIG_DIR = os.path.join(ROOT_DIR, "fig")
+MODEL_DIR = os.path.join(ROOT_DIR, "model")
+DATA_DIR = os.path.join(ROOT_DIR, "data")
+
+n_steps_in, n_steps_out = 5, 1
+
 
 class data_analyser():
     def __init__(self, model_path, data_path, input_length, output_length):
@@ -33,7 +42,11 @@ class data_analyser():
         # data used for drawing
         # data: an ndarray which contains company's profit
         raw_firm = self.raw_df.groupby('stkcd')
-        raw_f = raw_firm.get_group(company)
+        try:
+            raw_f = raw_firm.get_group(company)
+        except KeyError:
+            return
+
         data = raw_f['b001100000']
         data = data.values
 
@@ -55,7 +68,6 @@ class data_analyser():
         else:
             return
         testX = testX.reshape([1, self.input_length, f.shape[1]])
-
         # predict
         pre = self.model.predict(testX)
         '''
@@ -89,17 +101,26 @@ class data_analyser():
         data_pre = np.concatenate((data_pre, pre_profit))
 
         # plot profit
-        plt.title("Profit Prediction")
+        
+        plt.title("Company%d Profit Prediction" %(company))
         plt.xlabel("Time")
         plt.ylabel("Profit")
-        plt.legend(['predict value', 'actual observed value'], loc=0)
         plt.plot(time, data_pre, "g.-")
         plt.plot(time, data, "r.-")
-        plt.savefig('D://VSCode_Project//Python//Project//fig//company%d.png' %(company))
+        plt.legend(["predict value", "actual observed value"], loc=0)
+
+        figure = plt.gcf()  # get current figure
+        figure.set_size_inches(12, 9)
+        fig_name = "company%d_mae.png" %(company)
+        plt.savefig(os.path.join(FIG_DIR, fig_name), dpi=100)
+
         plt.show()
+        plt.close()
 
 
 if __name__ == "__main__":
-    analyser = data_analyser("D://VSCode_Project//Python//Project//model//lstm_mae.h5", "D://VSCode_Project//Python//Project//data//level1.csv", 5, 1)
-    for i in range(1, 100):
+    model_name = os.path.join(MODEL_DIR, "lstm_mae.h5")
+    data_name = os.path.join(DATA_DIR, "level1.csv")
+    analyser = data_analyser(model_name, data_name, n_steps_in, n_steps_out)
+    for i in range(1, 999):
         analyser.draw(i)
