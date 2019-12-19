@@ -13,7 +13,20 @@ n_steps_in, n_steps_out = 5, 1
 
 
 class data_analyser():
+    '''
+        ## class data_analyser:
+        Visualize prediction data by invoking draw function.
+
+        Further functions will be developed in future use
+    '''
     def __init__(self, model_path, data_path, input_length, output_length):
+        '''
+            param:
+            model_path: model storage path
+            data_path: data storage path
+            input_length: num of years for training input
+            output_length: num of years for training output
+        '''
         self.raw_df = pd.read_csv(data_path)
         self.input_length = input_length
         self.output_length = output_length
@@ -33,6 +46,9 @@ class data_analyser():
         self.df = df
 
     def draw(self, company):
+        '''
+            draw the graph by given company name
+        '''
         # data used for restoring
         e_mean = self.raw_df['b001100000'].mean()
         e_std = self.raw_df['b001100000'].std()
@@ -101,7 +117,7 @@ class data_analyser():
         data_pre = np.concatenate((data_pre, pre_profit))
 
         # plot profit
-        
+
         plt.title("Company%d Profit Prediction" %(company))
         plt.xlabel("Time")
         plt.ylabel("Profit")
