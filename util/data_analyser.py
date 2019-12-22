@@ -9,7 +9,7 @@ FIG_DIR = os.path.join(ROOT_DIR, "fig")
 MODEL_DIR = os.path.join(ROOT_DIR, "model")
 DATA_DIR = os.path.join(ROOT_DIR, "data")
 
-n_steps_in, n_steps_out = 5, 1
+n_steps_in, n_steps_out = 18, 3
 
 
 class data_analyser():
@@ -19,7 +19,7 @@ class data_analyser():
 
         Further functions will be developed in future use
     '''
-    def __init__(self, model_path, data_path, input_length, output_length):
+    def __init__(self, model_path: str, data_path: str, input_length: int, output_length: int):
         '''
             param:
             model_path: model storage path
@@ -45,7 +45,7 @@ class data_analyser():
 
         self.df = df
 
-    def draw(self, company):
+    def draw(self, company: int) -> None:
         '''
             draw the graph by given company name
         '''
@@ -113,7 +113,7 @@ class data_analyser():
         pre_profit = pre[0, :, 0]
         pre_profit *= p_std
         pre_profit += p_mean
-        data_pre = data[:-1]
+        data_pre = data[:-self.output_length]
         data_pre = np.concatenate((data_pre, pre_profit))
 
         # plot profit
@@ -127,7 +127,7 @@ class data_analyser():
 
         figure = plt.gcf()  # get current figure
         figure.set_size_inches(12, 9)
-        fig_name = "company%d_mae.png" %(company)
+        fig_name = "company%d_mse.png" %(company)
         plt.savefig(os.path.join(FIG_DIR, fig_name), dpi=100)
 
         plt.show()
@@ -135,7 +135,7 @@ class data_analyser():
 
 
 if __name__ == "__main__":
-    model_name = os.path.join(MODEL_DIR, "lstm_mae.h5")
+    model_name = os.path.join(MODEL_DIR, "lstm_mae_yc.h5")
     data_name = os.path.join(DATA_DIR, "level1.csv")
     analyser = data_analyser(model_name, data_name, n_steps_in, n_steps_out)
     for i in range(1, 999):

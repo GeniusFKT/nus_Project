@@ -3,7 +3,7 @@ import pandas as pd
 
 
 class data_loader():
-    def __init__(self, data_path, input_length, output_length, ratio):
+    def __init__(self, data_path: str, input_length: int, output_length: int, ratio: float):
         '''
             PARAM:
             data_path: path to data file
@@ -38,16 +38,21 @@ class data_loader():
             testing dataset: later 30%
         '''
 
+        # firm: data frame grouped by company names
         stkcd = self.df['stkcd']
         stkcd = np.array(stkcd).tolist()
         stkcd = list(set(stkcd))
         firm = self.df.groupby('stkcd')
 
         dataX, dataY = [], []
-        for i, val in enumerate(stkcd):
+        for _, val in enumerate(stkcd):
+            # f: numpy array of corresponding firm
+            # num: available data number
+
             f = firm.get_group(val)
             f = f.drop(['stkcd', 'accper'], axis=1)
             f = f.values
+
             num = f.shape[0] - self.input_length - self.output_length
             if num >= 0:
                 for j in range(num + 1):
@@ -75,6 +80,7 @@ class data_loader():
             Test dataset is the last input_length + output_length years stat from company (2000+)
         '''
 
+        # firm: data frame grouped by company names
         stkcd = self.df['stkcd']
         stkcd = np.array(stkcd).tolist()
         stkcd = list(set(stkcd))
@@ -84,10 +90,14 @@ class data_loader():
         testX, testY = [], []
 
         for i, val in enumerate(stkcd):
+            # f: numpy array of corresponding firm
+            # num: available data number
             f = firm.get_group(val)
             f = f.drop(['stkcd', 'accper'], axis=1)
             f = f.values
+
             num = f.shape[0] - self.input_length - self.output_length
+
             if (num >= 0):
                 testX.append(f[-self.input_length -
                                self.output_length:-self.output_length, :])
@@ -97,6 +107,57 @@ class data_loader():
                     trainY.append(f[j + self.input_length:j +
                                     self.input_length + self.output_length,
                                     10])
+        trainX = np.array(trainX)
+        trainY = np.array(trainY)
+        trainY = np.reshape(trainY, (-1, self.output_length, 1))
+        testX = np.array(testX)
+        testY = np.array(testY)
+        testY = np.reshape(testY, (-1, self.output_length, 1))
+
+        return trainX, trainY, testX, testY
+
+    def get_data_yc(self):
+        '''
+            ## get_data version YanCheng
+            I wanna try padding zero to in a company's data
+            whose recording years are later than other company.
+
+            Train and test dataset is from shuffled data and splited by given ratio. 
+        '''
+
+        # firm: data frame grouped by company names
+        stkcd = self.df['stkcd']
+        stkcd = np.array(stkcd).tolist()
+        stkcd = list(set(stkcd))
+        firm = self.df.groupby('stkcd')
+
+        trainX, trainY = [], []
+        testX, testY = [], []
+
+        for _, val in enumerate(stkcd):
+            # f: numpy array of corresponding firm
+            # num: available data number
+            f = firm.get_group(val)
+            f = f.drop(['stkcd', 'accper'], axis=1)
+            f = f.values
+
+            # padding 0
+            # 21 years in total
+            if f.shape[0] < 21:
+                f = np.concatenate([np.zeros([21 - f.shape[0], f.shape[1]]), f], axis=0)
+
+            if np.random.random() < self.ratio:
+                trainX.append(f[:-self.output_length, :])
+                trainY.append(f[-self.output_length:, 10])
+            else:
+                testX.append(f[:-self.output_length, :])
+                testY.append(f[-self.output_length:, 10])
+
+        # shape (output_length = 3)
+        # (3020, 18, 27)
+        # (3020, 3, 1)
+        # (788, 18, 27)
+        # (788, 3, 1)
         trainX = np.array(trainX)
         trainY = np.array(trainY)
         trainY = np.reshape(trainY, (-1, self.output_length, 1))

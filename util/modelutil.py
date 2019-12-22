@@ -5,12 +5,13 @@ from util import data_loader
 from seq2seq.models import Seq2Seq
 from keras.callbacks import ModelCheckpoint
 import os
+import numpy as np
 
-ROOT_DIR = os.path.abspath("..")
+ROOT_DIR = os.path.abspath("")
 DATA_DIR = os.path.join(ROOT_DIR, "data")
 MODEL_DIR = os.path.join(ROOT_DIR, "model")
 
-n_steps_in, n_steps_out = 5, 1
+n_steps_in, n_steps_out = 18, 3
 n_features_in, n_features_out = 27, 1
 batch_size = 64
 EPOCHS = 30
@@ -19,11 +20,13 @@ class my_model():
     def __init__(self):
         data_name = os.path.join(DATA_DIR, "level1.csv")
         self.loader = data_loader.data_loader(data_name, n_steps_in, n_steps_out, 0.8)
-        trainX, trainY, testX, testY = self.loader.get_data()
+        trainX, trainY, testX, testY = self.loader.get_data_yc()
         self.trainX = trainX
         self.trainY = trainY
         self.testX = testX
         self.testY = testY
+        np.save(os.path.join(MODEL_DIR, "yc_testX.npy"), testX)
+        np.save(os.path.join(MODEL_DIR, "yc_testY.npy"), testY)
 
 
 class SingleLayerLSTM(my_model):
@@ -37,7 +40,7 @@ class SingleLayerLSTM(my_model):
         model.add(LSTM(128, activation='relu', input_shape=(n_steps_out, 128), return_sequences=True))
         model.add(TimeDistributed(Dense(n_features_out)))
 
-        loss = tf.keras.losses.MeanSquaredError(name="Loss")
+        loss = tf.keras.losses.MeanAbsoluteError(name="Loss")
         # metrics = [tf.keras.metrics.MeanSquaredError(name="mean_square")]
         # checkpoint = ModelCheckpoint("./model/lstm_val.h5", monitor="mean_square", verbose=1, save_best_only=True, mode='min')
 
@@ -53,7 +56,7 @@ class SingleLayerLSTM(my_model):
             shuffle=True
         )
 
-        model_name = os.path.join(MODEL_DIR, "lstm.h5")
+        model_name = os.path.join(MODEL_DIR, "lstm_mae_yc.h5")
         model.save(model_name)
 
 class MultiLayerLSTM(my_model):
@@ -70,19 +73,20 @@ class MultiLayerLSTM(my_model):
 
         model.add(TimeDistributed(Dense(n_features_out)))
 
-        loss = tf.keras.losses.MeanSquaredError(name="Loss")
+        # loss = tf.keras.losses.MeanAbsoluteError(name="Loss")
 
-        metrics = [tf.keras.metrics.MeanAbsolutePercentageError(name="mean_absolute_percentage"),
-                   tf.keras.metrics.MeanSquaredError(name="mean_square")]
+        # metrics = [tf.keras.metrics.MeanAbsolutePercentageError(name="mean_absolute_percentage"),
+        #            tf.keras.metrics.MeanSquaredError(name="mean_square")]
 
         checkpoint = ModelCheckpoint("model_save", monitor="mean_absolute_percentage", verbose=1, save_best_only=True, mode='min')
 
-        model.compile(optimizer='adam', loss=loss, metrics=metrics)
+        model.compile(optimizer='adam', loss='mae', metrics=['accuracy'])
 
         model.summary()
 
         model.fit(self.trainX, self.trainY, batch_size=batch_size, callbacks=[checkpoint], epochs=EPOCHS, validation_data=(self.testX, self.testY), shuffle=True)
 
+        model.save(os.path.join(MODEL_DIR, "lstm_mae_yc.h5"))
 
 class model_seq2seq(my_model):
     def train(self):
